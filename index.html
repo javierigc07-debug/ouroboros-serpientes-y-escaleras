@@ -57,21 +57,23 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-o
 @keyframes fx{0%{opacity:0}15%{opacity:1}100%{opacity:0}}
 
 .banner{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;z-index:4;text-align:center}
-.banner .in{opacity:0;transform:scale(.6)}
+.banner .in{opacity:0;position:relative;isolation:isolate;will-change:opacity,transform}
+/* halo oscuro: el texto se lee aunque debajo haya serpientes y escaleras */
+.banner .in::before{content:'';position:absolute;inset:-30% -12%;z-index:-1;background:radial-gradient(closest-side,rgba(3,8,7,.8),rgba(3,8,7,.5) 58%,transparent)}
 .banner.show .in{animation:pop var(--ms,1.6s) cubic-bezier(.2,.9,.25,1.1) forwards}
 .banner .bt{font-family:var(--display);font-weight:900;font-size:clamp(28px,6vw,72px);letter-spacing:.08em;
-  color:var(--bc,#fff);text-shadow:0 0 18px var(--bc,#fff),0 0 50px var(--bc,#fff),0 4px 0 rgba(0,0,0,.6)}
+  color:var(--bc,#fff);text-shadow:0 3px 0 rgba(0,0,0,.75),0 0 22px color-mix(in srgb,var(--bc,#fff) 65%,transparent)}
 .banner .in{max-width:96%}
 .banner.evt .bs{letter-spacing:.14em;max-width:84%;margin-inline:auto;line-height:1.4}
 .banner.evt .bt{font-size:clamp(20px,3.8vw,46px);letter-spacing:.06em;line-height:1.1;padding:0 3%}
 .banner .bs{margin-top:6px;font-size:clamp(12px,1.6vw,20px);letter-spacing:.35em;text-transform:uppercase;color:#fff;
-  text-shadow:0 2px 12px rgba(0,0,0,.9);opacity:.9}
+  text-shadow:0 2px 0 rgba(0,0,0,.8),0 0 10px rgba(0,0,0,.9)}
 .banner.mut .bt{animation:glitch .35s steps(2) infinite}
-@keyframes pop{0%{opacity:0;transform:scale(.5);filter:blur(10px)}14%{opacity:1;transform:scale(1.12);filter:blur(0)}24%{transform:scale(1)}78%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.18);filter:blur(6px)}}
+@keyframes pop{0%{opacity:0;transform:translateY(10px) scale(.95)}9%{opacity:1;transform:translateY(0) scale(1.03)}16%{transform:scale(1)}84%{opacity:1;transform:scale(1)}100%{opacity:0;transform:translateY(-8px) scale(1)}}
 @keyframes glitch{
-  0%{text-shadow:3px 0 #ff2d6f,-3px 0 #2ee6ff,0 0 40px var(--bc)}
-  50%{text-shadow:-3px 1px #ff2d6f,3px -1px #2ee6ff,0 0 40px var(--bc)}
-  100%{text-shadow:2px -1px #ff2d6f,-2px 1px #2ee6ff,0 0 40px var(--bc)}
+  0%{text-shadow:3px 0 #ff2d6f,-3px 0 #2ee6ff,0 3px 0 rgba(0,0,0,.75)}
+  50%{text-shadow:-3px 1px #ff2d6f,3px -1px #2ee6ff,0 3px 0 rgba(0,0,0,.75)}
+  100%{text-shadow:2px -1px #ff2d6f,-2px 1px #2ee6ff,0 3px 0 rgba(0,0,0,.75)}
 }
 
 /* ───────── panel ───────── */
@@ -766,7 +768,7 @@ function drawLadder(ld) {
 // puntos del cuerpo de la serpiente (cabeza = 'from', cola = 'to'), ondulando con el tiempo
 function snakePts(sn, tm, upTo) {
   const a = cell(sn.from), b = cell(sn.to), dx = b.x - a.x, dy = b.y - a.y, L = Math.hypot(dx, dy), ux = dx / L, uy = dy / L, nx = -uy, ny = ux;
-  const R = T * .165, n = Math.max(26, Math.round(L / (R * .5))), waves = Math.max(2.2, L / (T * 1.7)), amp = T * .4;
+  const R = T * .165, n = Math.max(26, Math.round(L / (R * .5))), waves = Math.max(2.2, L / (T * 1.7)), amp = T * (sn.amp != null ? sn.amp : .4);
   const m = Math.max(2, Math.round((n - 1) * clamp(upTo, 0, 1)) + 1), pts = [];
   for (let i = 0; i < m; i++) {
     const t = i / (n - 1), env = Math.pow(Math.sin(Math.PI * Math.min(1, t)), .7);
@@ -990,7 +992,7 @@ function genLayout(prof) {
 }
 function mkSnake([from, to], i, hues, giant) {
   const h = giant ? 44 : hues[i % hues.length];
-  return { type: 'snake', from, to, prog: 0, born: false, seed: Math.random() * 6.28, scale: giant ? 1.5 : 1, giant: !!giant,
+  return { type: 'snake', from, to, prog: 0, born: false, seed: Math.random() * 6.28, scale: giant ? 1.5 : 1, giant: !!giant, amp: .4,
     c1: `hsl(${h} 62% ${giant ? 30 : 36}%)`, c2: `hsl(${h + 22} 72% ${giant ? 56 : 50}%)`, cOut: `hsl(${h} 60% 9%)`, cDark: `hsl(${h} 70% 18%)` };
 }
 const FALLBACK = { ladders: [[4, 25], [12, 33], [28, 56], [40, 63], [51, 72], [71, 92]], snakes: [[98, 79], [93, 68], [64, 36], [54, 19], [47, 26], [31, 9]], profile: PROFILES[0], giant: -1 };
@@ -1022,9 +1024,22 @@ function specialsFor(lay) {
   for (let i = 0; i < n; i++) { const sq = pick(); if (sq == null) break; out.push({ kind: kinds[rnd(0, kinds.length - 1)], sq, to: null }); }
   return out;
 }
+// reduce la ondulación de cada serpiente según el espacio libre que tiene alrededor:
+// sola ondula entera; apretada junto a otras líneas, se endereza para no pisarlas
+function fitWobble(snakes, ladders) {
+  const items = [...snakes.map(s => ({ s, A: cellU(s.from), B: cellU(s.to), r: .206 * s.scale, wob: true })), ...ladders.map(l => ({ A: cellU(l.from), B: cellU(l.to), r: .21, wob: false }))];
+  for (const a of items) {
+    if (!a.wob) continue; let amp = .4;
+    for (const b of items) {
+      if (b === a) continue; const room = segDist(a.A, a.B, b.A, b.B) - a.r - b.r - .1;    // hueco libre entre cuerpos
+      amp = Math.min(amp, b.wob ? room / 2 : room);                                       // si el vecino también ondula, se reparten el hueco
+    }
+    a.s.amp = clamp(amp, .08, .4);
+  }
+}
 function applyLayout(lay) {
   const hues = shuffle(SNAKE_HUES); G.profile = lay.profile;
-  G.snakes = lay.snakes.map((s, i) => mkSnake(s, i, hues, i === lay.giant)); G.ladders = lay.ladders.map(mkLadder);
+  G.snakes = lay.snakes.map((s, i) => mkSnake(s, i, hues, i === lay.giant)); G.ladders = lay.ladders.map(mkLadder); fitWobble(G.snakes, G.ladders);
   G.specials = G.opts.special ? specialsFor(lay).map(mkSpecial) : [];
   buildJumps();
 }
