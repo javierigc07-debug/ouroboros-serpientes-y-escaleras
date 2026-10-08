@@ -187,6 +187,7 @@ kbd{font-family:inherit;border:1px solid var(--line);border-radius:5px;padding:0
 /* ───────── modals ───────── */
 .modal{position:fixed;inset:0;z-index:100;display:none;padding:18px;overflow:auto;
   background:radial-gradient(circle at 50% 30%,rgba(10,26,22,.93),rgba(3,7,6,.97))}
+.modal{grid-template-columns:minmax(0,1fr)}
 .modal.show{display:grid;animation:fade .4s}
 @keyframes fade{from{opacity:0}to{opacity:1}}
 .mcard{margin:auto;width:min(560px,100%);border-radius:26px;padding:20px 28px 20px;text-align:center;
@@ -371,6 +372,37 @@ body.landing #landing,body.landing .climb{display:block}
 .avatar canvas{width:100%;height:100%;display:block}
 .avatar i{position:absolute;right:-5px;bottom:-5px;width:19px;height:19px;border-radius:50%;background:var(--gold);color:#1a1305;font-style:normal;font-size:11px;display:grid;place-items:center;line-height:1}
 .pl .av{grid-row:span 2;width:44px;height:44px;border-radius:11px;background:radial-gradient(circle at 50% 30%,color-mix(in srgb,var(--c) 26%,#0d1917),#0b1513);border:1px solid color-mix(in srgb,var(--c) 45%,transparent)}
+.mcard.setup{width:min(980px,100%);text-align:left;padding:22px 28px}
+.shead{display:flex;align-items:center;gap:18px}
+.shead .ouro{width:74px;height:74px;margin:0;flex:none}
+.shead h2{font-size:36px;line-height:1;text-align:left}
+.mcard.setup .tag1{margin:6px 0 0;text-align:left}
+.mcard.setup h3{margin:14px 0 8px}
+.sgrid{display:grid;grid-template-columns:1.15fr 1fr;gap:6px 30px;margin-top:6px}
+.sfoot{display:flex;align-items:center;flex-wrap:wrap;gap:6px 18px;margin-top:16px}
+.sfoot .go{width:auto;flex:1 1 280px;margin:0}
+.sfoot .ghost{margin:0}
+.mcard.setup .prow{padding:6px 10px;margin-bottom:6px}
+.mcard.setup .prow .lv{padding-top:0}
+@media (max-width:860px){
+  .sgrid{grid-template-columns:minmax(0,1fr)} .mcard.setup{width:min(560px,100%);padding:18px 14px} .shead{gap:12px;padding-right:38px}
+  .shead .ouro{width:56px;height:56px}.shead h2{font-size:clamp(20px,6.4vw,30px)}.mcard.setup .tag1{font-size:10px;letter-spacing:.16em}
+  .mcard.setup .prow{grid-template-columns:auto minmax(0,1fr) auto;gap:8px}.mcard.setup .prow input{width:100%}
+  .mcard.setup .seg button{padding:7px 10px}.sfoot .go{flex-basis:100%}
+}
+@media (max-height:760px) and (min-width:861px){
+  .mcard.setup{padding:14px 24px}.shead .ouro{display:none}.shead h2{font-size:30px}
+  .mcard.setup h3{margin:10px 0 6px}.mcard.setup .prow{margin-bottom:4px}.sfoot{margin-top:10px}.mcard.setup .tag1{margin-top:3px}
+}
+@media (max-height:660px) and (min-width:861px){
+  .mcard.setup{padding:10px 20px}
+  .shead>div{display:flex;align-items:baseline;gap:6px 16px;flex-wrap:wrap}.mcard.setup .tag1{margin:0}.shead h2{font-size:26px}
+  .mcard.setup h3{margin:6px 0 4px}
+  .mcard.setup .avatar{width:38px;height:38px}
+  .mcard.setup .prow{padding:4px 8px;margin-bottom:3px;gap:4px 10px}
+  .mcard.setup .seg button{padding:5px 12px}.mcard.setup .seg.sm button{padding:3px 10px}
+  .sfoot{margin-top:6px}.sfoot .go{height:44px}
+}
 .mcard.wide{width:min(880px,100%)}
 .skwrap{display:grid;grid-template-columns:270px 1fr;gap:26px;margin-top:12px;text-align:left}
 .skprev{border-radius:18px;border:1px solid var(--line);background:radial-gradient(circle at 50% 30%,rgba(255,255,255,.1),rgba(0,0,0,.3));aspect-ratio:1}
@@ -606,41 +638,44 @@ body.landing #landing,body.landing .climb{display:block}
 
 <!-- Configuración -->
 <div class="modal" id="setup">
-  <div class="mcard">
+  <div class="mcard setup">
     <button class="mx" id="btnSetupX" aria-label="Volver al inicio">✕</button>
-    <div class="ouro"><div class="ring"></div><div class="head"></div></div>
-    <h2>OUROBOROS</h2>
-    <div class="tag1">Serpientes &amp; Escaleras · edición mutante</div>
-
-    <h3>Jugadores</h3>
-    <div class="seg full" id="segN">
-      <button data-n="2" class="on">2 jugadores</button><button data-n="3">3</button><button data-n="4">4</button>
+    <div class="shead">
+      <div class="ouro"><div class="ring"></div><div class="head"></div></div>
+      <div><h2>OUROBOROS</h2><div class="tag1">Serpientes &amp; Escaleras · edición mutante</div></div>
     </div>
-    <div id="prows" style="margin-top:10px"></div>
-
-    <h3>El tablero muta cada</h3>
-    <div class="seg full" id="segE">
-      <button data-e="2">2 rondas</button><button data-e="3" class="on">3 rondas</button><button data-e="4">4 rondas</button>
+    <div class="sgrid">
+      <div class="scol">
+        <h3>Jugadores</h3>
+        <div class="seg full" id="segN">
+          <button data-n="2" class="on">2 jugadores</button><button data-n="3">3</button><button data-n="4">4</button>
+        </div>
+        <div id="prows" style="margin-top:10px"></div>
+      </div>
+      <div class="scol">
+        <h3>El tablero muta cada</h3>
+        <div class="seg full" id="segE">
+          <button data-e="2">2 rondas</button><button data-e="3" class="on">3 rondas</button><button data-e="4">4 rondas</button>
+        </div>
+        <h3>Extras</h3>
+        <div class="opts">
+          <button class="sw on" id="swSpecial" title="Portales, relámpagos, cofres, escudos y telarañas">Casillas especiales</button>
+          <button class="sw on" id="swEvents" title="Cada mutación trae un evento sorpresa">Eventos de mutación</button>
+        </div>
+        <div class="opts" id="codeChips" style="margin-top:8px"></div>
+        <h3>Cómo se juega</h3>
+        <div class="rules compact" style="display:grid">
+          <div><span>🎲</span><p>Lanzas <b>2 dados</b> y eliges uno</p></div>
+          <div><span>🧠</span><p>El otro va a tu <b>reserva</b></p></div>
+          <div><span>🌀</span><p>El tablero <b>muta</b> y trae eventos</p></div>
+        </div>
+      </div>
     </div>
-
-    <h3>Extras</h3>
-    <div class="opts">
-      <button class="sw on" id="swSpecial" title="Portales, relámpagos, cofres, escudos y telarañas">Casillas especiales</button>
-      <button class="sw on" id="swEvents" title="Cada mutación trae un evento sorpresa">Eventos de mutación</button>
+    <div class="sfoot">
+      <button class="btn primary go" id="btnStart">COMENZAR</button>
+      <button class="ghost" id="btnDemo">Ver demo: la CPU juega sola</button>
+      <button class="ghost" id="btnCodes2">¿Tienes un código?</button>
     </div>
-
-    <div class="opts" id="codeChips" style="margin-top:8px"></div>
-
-    <h3>Cómo se juega</h3>
-    <div class="rules compact" style="display:grid">
-      <div><span>🎲</span><p>Lanzas <b>2 dados</b> y eliges uno</p></div>
-      <div><span>🧠</span><p>El otro va a tu <b>reserva</b></p></div>
-      <div><span>🌀</span><p>El tablero <b>muta</b> y trae eventos</p></div>
-    </div>
-
-    <button class="btn primary go" id="btnStart">COMENZAR</button>
-    <button class="ghost" id="btnDemo">Ver demo: la CPU juega sola</button>
-    <button class="ghost" id="btnCodes2" style="margin-left:14px">¿Tienes un código?</button>
   </div>
 </div>
 
@@ -1356,7 +1391,7 @@ const slotPalette = i => cbMode ? COLORS[i] : paletteOf(cfg.players[i].skin.colo
 
 const SPOTS = [[-1, -1], [1, -1], [-1, 1], [1, 1]];
 function drawPawn(p, x, y, hop, active, alpha = 1) {
-  const t = T, c = p.c; ctx.save(); ctx.globalAlpha = alpha; ctx.translate(x, y);
+  const t = T, c = p.c; ctx.save(); ctx.globalAlpha = alpha; ctx.translate(x, y); const sc0 = p.sc || 1; ctx.scale(sc0, sc0);
   const sh = clamp(1 - hop / (t * .9), .35, 1);
   ctx.fillStyle = 'rgba(0,0,0,.45)'; ctx.beginPath(); ctx.ellipse(0, t * .17, t * .2 * sh, t * .07 * sh, 0, 0, 7); ctx.fill();
   ctx.translate(0, -hop); ctx.translate(0, t * .15); ctx.scale(p.sx, p.sy); ctx.translate(0, -t * .15);
@@ -1442,9 +1477,12 @@ function draw(now) {
     const groups = {};
     for (const p of G.players) if (!p.moving) (groups[p.pos] = groups[p.pos] || []).push(p);
     for (const p of G.players) {
-      let tx = 0, ty = 0;
-      if (!p.moving) { const grp = groups[p.pos]; if (grp.length > 1) { const k = grp.indexOf(p), s = SPOTS[k % 4]; tx = s[0] * .22; ty = s[1] * .12; } }
-      p.ox += (tx - p.ox) * .2; p.oy += (ty - p.oy) * .2;
+      let tx = 0, ty = 0, ts = 1;
+      if (!p.moving) {                                    // 2 fichas: lado a lado · 3-4 fichas: cuadrícula 2×2 más pequeña, dentro de la casilla
+        const grp = groups[p.pos], k = grp.indexOf(p);
+        if (grp.length === 2) { tx = k ? .21 : -.21; ts = .95; } else if (grp.length > 2) { const s = SPOTS[k % 4]; tx = s[0] * .25; ty = s[1] * .23; ts = .74; }
+      }
+      p.ox += (tx - p.ox) * .2; p.oy += (ty - p.oy) * .2; p.sc += (ts - p.sc) * .2;
       const b = p.moving ? { x: p.vx, y: p.vy } : cellU(p.pos);
       p.px = (b.x + p.ox) * T; p.py = (b.y + p.oy) * T;
     }
@@ -1720,7 +1758,7 @@ function newGame(cfg, opts = {}) {
     const skin = { ...defaultSkin(i), ...sanitizeSkin(p.skin) }; if (codes.has('nestea')) skin.id = 'nestea';          // código: todas las fichas son Nestea
     const c0 = paletteOf(skin.color);
     return { id: i, name: p.name || (human ? 'Jugador ' + (i + 1) : CPU_NAMES[i]), human, level, skin, c0, c: cbMode ? COLORS[i] : c0, pos: 1, reserve: gift ? 6 : null, shield: gift,
-      moving: false, vx: 0, vy: 0, h: 0, ox: 0, oy: 0, px: 0, py: 0, sx: 1, sy: 1, flash: 0, snakes: 0, ladders: 0 };
+      moving: false, vx: 0, vy: 0, h: 0, ox: 0, oy: 0, sc: 1, px: 0, py: 0, sx: 1, sy: 1, flash: 0, snakes: 0, ladders: 0 };
   });
   G = {
     gid, seed, turn: 0, round: 1, sinceMut: 0, every: codes.has('mutante') ? 1 : cfg.every, mutations: 0, codes, phase: 'idle', dice: [null, null], doubles: false, bonus: false,
