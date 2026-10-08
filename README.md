@@ -3,6 +3,8 @@
 Un Serpientes y Escaleras digital donde **el tablero cambia mientras juegas**.
 Un solo archivo HTML, sin dependencias ni instalación: abre `index.html` en el navegador y juega.
 
+**Jugar en línea:** https://javierigc07-debug.github.io/ouroboros-serpientes-y-escaleras/
+
 ## Qué lo hace diferente
 
 - **Tablero mutante.** Cada 2, 3 o 4 rondas (tú eliges) las serpientes y escaleras se reescriben por completo, con un nuevo *perfil* y un nuevo *terreno*.
@@ -12,6 +14,10 @@ Un solo archivo HTML, sin dependencias ni instalación: abre `index.html` en el 
 - **Eventos de mutación:** 🌪️ tormenta de arena · 💨 viento a favor · 🌫️ niebla · 🎲 lluvia de dados · 🐍 piedad del Ouroboros · 🌘 eclipse · 🌋 temblor.
 - **CPU con tres niveles:** Novato, Normal y Astuta (esta mira un turno al futuro y sabe cuándo gastar la reserva).
 - **De 2 a 4 jugadores**, humanos o CPU, y un modo demo donde la CPU juega sola.
+- **Aviso de turno:** banner, sonido, flecha sobre tu ficha y la tarjeta de dados que late, para que nunca dudes cuándo te toca.
+- **Escaleras equilibradas:** cada perfil limita cuánto puede subir una escalera y cuánto bajar una serpiente.
+- **Códigos secretos** 🔑: activan modos especiales para la próxima partida (uno de ellos desbloquea una CPU de dificultad extrema, difícil pero ganable). Descubre cuáles.
+- **Landing page** con una partida real corriendo de fondo, tableros de muestra generados en vivo y música por terreno.
 
 ### Perfiles de tablero
 Equilibrio · Nido de víboras · Escalera al cielo · La Gran Serpiente · Caos total · Espejo (simétrico)
