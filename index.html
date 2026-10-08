@@ -171,6 +171,13 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-o
   box-shadow:0 6px 20px rgba(232,200,114,.28),inset 0 1px 0 rgba(255,255,255,.6);font-family:var(--display);font-weight:700;letter-spacing:.1em}
 .btn.primary:hover:not(:disabled){filter:brightness(1.08);transform:translateY(-1px)}
 .btn.primary:disabled{filter:grayscale(.7)}
+.deck.myturn{animation:turnglow 1.6s ease-in-out infinite}
+@keyframes turnglow{
+  0%,100%{box-shadow:0 10px 30px rgba(0,0,0,.35),0 0 14px color-mix(in srgb,var(--pc) 22%,transparent)}
+  50%{box-shadow:0 10px 30px rgba(0,0,0,.35),0 0 38px color-mix(in srgb,var(--pc) 60%,transparent)}}
+.btn.primary.attn:not(:disabled){animation:attn 1.1s ease-in-out infinite}
+@keyframes attn{0%,100%{transform:scale(1)}50%{transform:scale(1.04);filter:brightness(1.14)}}
+.banner.turn .bt{font-size:clamp(26px,4.6vw,54px);letter-spacing:.1em}
 .keys{font-size:11px;color:var(--mute);text-align:center;letter-spacing:.04em}
 kbd{font-family:inherit;border:1px solid var(--line);border-radius:5px;padding:0 5px;background:rgba(255,255,255,.05)}
 
@@ -274,7 +281,7 @@ body.cb .gem::after{content:attr(data-s);font-size:13px;line-height:1;color:#101
   .dice-row{gap:8px}
 }
 @media (prefers-reduced-motion:reduce){
-  .die.ready,.fuse i.hot,.ouro{animation:none}
+  .die.ready,.fuse i.hot,.ouro,.deck.myturn,.btn.primary.attn{animation:none}
 }
 </style>
 </head>
@@ -535,6 +542,7 @@ const Sfx = (() => {
       noise({ t: 1.5, v: .25, f: 200, q: 1.2, sweep: 5000 });
       for (let i = 0; i < 6; i++) tone({ f: 200 + Math.random() * 1400, t: .1, type: 'square', v: .04, at: .4 + i * .13 });
     },
+    turn() { tone({ f: 659, t: .18, type: 'triangle', v: .16 }); tone({ f: 988, t: .38, type: 'sine', v: .15, at: .1 }); },
     portal() { tone({ f: 300, t: .5, type: 'sine', v: .2, slide: 3 }); tone({ f: 900, t: .5, type: 'triangle', v: .1, slide: .3, at: .05 }); noise({ t: .5, v: .12, f: 800, q: 3, sweep: 3000 }); },
     bolt() { noise({ t: .25, v: .35, f: 3000, q: .8, type: 'highpass' }); tone({ f: 1200, t: .2, type: 'sawtooth', v: .12, slide: .2 }); tone({ f: 90, t: .3, type: 'sine', v: .3, slide: .5, at: .03 }); },
     web() { tone({ f: 520, t: .5, type: 'triangle', v: .1, slide: .35 }); noise({ t: .4, v: .1, f: 4000, q: 2, type: 'highpass' }); },
@@ -825,6 +833,9 @@ function drawPawn(p, x, y, hop, active, alpha = 1) {
   if (active) {
     ctx.strokeStyle = c.main; ctx.lineWidth = 2; ctx.globalAlpha = alpha * (.45 + .45 * Math.sin(time * 5.5));
     ctx.beginPath(); ctx.ellipse(0, t * .15, t * .3, t * .11, 0, 0, 7); ctx.stroke(); ctx.globalAlpha = alpha;
+    const ay = -t * .47 + Math.sin(time * 5.5) * t * .035;
+    ctx.fillStyle = c.main; ctx.strokeStyle = 'rgba(0,0,0,.6)'; ctx.lineWidth = 1.6; ctx.lineJoin = 'round';
+    ctx.beginPath(); ctx.moveTo(0, ay + t * .13); ctx.lineTo(-t * .1, ay); ctx.lineTo(t * .1, ay); ctx.closePath(); ctx.fill(); ctx.stroke();
   }
   let g = ctx.createLinearGradient(-t * .2, 0, t * .2, 0); g.addColorStop(0, c.dark); g.addColorStop(.4, c.main); g.addColorStop(1, c.dark);
   ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(0, t * .13, t * .2, t * .07, 0, 0, 7); ctx.fill();
@@ -935,12 +946,12 @@ function segDist(a, b, c, d) {
 }
 // perfiles de tablero: cada mutación elige uno distinto, con su propia personalidad
 const PROFILES = [
-  { id: 'balance', name: 'Equilibrio',        nS: [5, 7], nL: [5, 7], sLen: [2.4, 6.2], lLen: [2.4, 5.6], gap: 1.0, minS: 5, minL: 5 },
-  { id: 'nest',    name: 'Nido de víboras',   nS: [8, 9], nL: [3, 4], sLen: [2.2, 5.6], lLen: [2.4, 5.6], gap: .95,  minS: 7, minL: 3 },
-  { id: 'sky',     name: 'Escalera al cielo', nS: [3, 4], nL: [4, 5], sLen: [3, 6.5],   lLen: [4, 8],     gap: 1.0, minS: 3, minL: 4 },
-  { id: 'giant',   name: 'La Gran Serpiente', nS: [3, 4], nL: [5, 6], sLen: [2.6, 6],   lLen: [2.6, 6.5], gap: 1.05, minS: 3, minL: 5, giant: true },
-  { id: 'chaos',   name: 'Caos total',        nS: [8, 9], nL: [8, 9], sLen: [2.2, 4.6], lLen: [2.2, 4.6], gap: .82,  minS: 7, minL: 7 },
-  { id: 'mirror',  name: 'Espejo',            nS: [4, 5], nL: [0, 0], sLen: [2.8, 6.8], lLen: [2.8, 6.8], gap: 1.0,  minS: 4, minL: 4, mirror: true }
+  { id: 'balance', name: 'Equilibrio',        nS: [5, 7], nL: [5, 7], sLen: [2.4, 5],   lLen: [2.4, 4.4], gap: 1.0,  minS: 5, minL: 5, maxGain: 32, maxDrop: 40 },
+  { id: 'nest',    name: 'Nido de víboras',   nS: [8, 9], nL: [4, 5], sLen: [2.2, 4.6], lLen: [2.4, 4],   gap: .95,  minS: 7, minL: 4, maxGain: 26, maxDrop: 40 },
+  { id: 'sky',     name: 'Escalera al cielo', nS: [4, 5], nL: [4, 5], sLen: [3, 5.4],   lLen: [3.2, 5.4], gap: 1.0,  minS: 4, minL: 4, maxGain: 40, maxDrop: 45 },
+  { id: 'giant',   name: 'La Gran Serpiente', nS: [3, 4], nL: [5, 6], sLen: [2.6, 4.8], lLen: [2.6, 4.4], gap: 1.05, minS: 3, minL: 5, maxGain: 32, maxDrop: 40, giant: true },
+  { id: 'chaos',   name: 'Caos total',        nS: [8, 9], nL: [8, 9], sLen: [2.2, 3.8], lLen: [2.2, 3.6], gap: .82,  minS: 7, minL: 7, maxGain: 28, maxDrop: 38 },
+  { id: 'mirror',  name: 'Espejo',            nS: [4, 5], nL: [0, 0], sLen: [2.8, 4.4], lLen: [2.8, 4.4], gap: 1.0,  minS: 4, minL: 4, maxGain: 32, maxDrop: 32, mirror: true }
 ];
 // elige el largo deseado primero y deduce la casilla destino (muestreo eficiente)
 const sqAt = (col, row) => row * 10 + (row % 2 ? 9 - col : col) + 1;
@@ -955,15 +966,15 @@ function genLayout(prof) {
   for (let attempt = 0; attempt < 250; attempt++) {
     const used = new Set([1, 100]), segs = [], ladders = [], snakes = [];
     const fits = (A, B, pad = 0) => !segs.some(s => segDist(A, B, s.A, s.B) < prof.gap + pad + s.pad);
-    const ok = (a, b, [lo, hi], dxMax = 4.5) => {
-      if (b > 99 || b < 2 || a > 99 || a < 2 || used.has(a) || used.has(b) || Math.abs(rowOf(b) - rowOf(a)) < 2) return null;
+    const ok = (a, b, [lo, hi], dxMax = 4.5, cap = 0) => {
+      if (b > 99 || b < 2 || a > 99 || a < 2 || used.has(a) || used.has(b) || Math.abs(rowOf(b) - rowOf(a)) < 2 || (cap && Math.abs(b - a) > cap)) return null;
       const A = cellU(a), B = cellU(b), len = Math.hypot(A.x - B.x, A.y - B.y);
       return (len >= lo && len <= hi && Math.abs(A.x - B.x) <= dxMax) ? { A, B } : null;
     };
     const place = (isLadder, range, pad = 0, pick) => {
       for (let k = 0; k < 220; k++) {
         const [a, b] = pick ? pick() : aimed(isLadder, range, pad ? 5.2 : 4.5);
-        const c = ok(a, b, range, pad ? 5.2 : 4.5); if (!c || !fits(c.A, c.B, pad)) continue;
+        const c = ok(a, b, range, pad ? 5.2 : 4.5, pad ? 0 : (isLadder ? prof.maxGain : prof.maxDrop)); if (!c || !fits(c.A, c.B, pad)) continue;
         used.add(a); used.add(b); segs.push({ A: c.A, B: c.B, pad }); (isLadder ? ladders : snakes).push([a, b]); if (pad) snakes.giant = snakes.length - 1; return true;
       }
       return false;
@@ -972,7 +983,7 @@ function genLayout(prof) {
       const pairs = rnd(prof.nS[0], prof.nS[1]);
       for (let p = 0; p < pairs; p++) {
         for (let k = 0; k < 220; k++) {
-          const a = rnd(16, 99), b = rnd(2, a - 10), c = ok(a, b, prof.sLen); if (!c || !fits(c.A, c.B)) continue;
+          const a = rnd(16, 99), b = rnd(2, a - 10), c = ok(a, b, prof.sLen, 4.5, prof.maxGain); if (!c || !fits(c.A, c.B)) continue;
           const a2 = 101 - a, b2 = 101 - b, A2 = cellU(a2), B2 = cellU(b2);
           if (used.has(a2) || used.has(b2) || a2 === b || b2 === a || segDist(c.A, c.B, A2, B2) < prof.gap || !fits(A2, B2)) continue;
           used.add(a); used.add(b); used.add(a2); used.add(b2);
@@ -1062,6 +1073,7 @@ function evalMove(from, steps) {
 }
 
 /* ═════════════ interfaz ═════════════ */
+const BASE_TITLE = document.title;
 const el = { players: $('#players'), prompt: $('#prompt'), log: $('#log'), fuse: $('#fuse'), mutSub: $('#mutSub'), terr: $('#terr'), rnd: $('#rnd'),
   roll: $('#btnRoll'), reserve: $('#btnReserve'), deck: $('#deck'), dice: [$('#die0'), $('#die1')], dieR: $('#dieR'),
   opt: [$('#opt0'), $('#opt1')], optR: $('#optR'), banner: $('#banner'), bt: $('#bt'), bs: $('#bs'), board: $('#board') };
@@ -1109,6 +1121,9 @@ function renderMut() {
 function renderDeck() {
   const p = G.players[G.turn], human = p.human && !G.over && !G.replay;
   el.deck.style.setProperty('--pc', p.c.main);
+  const mine = human && (G.phase === 'idle' || G.phase === 'choose');
+  el.deck.classList.toggle('myturn', mine); el.roll.classList.toggle('attn', human && G.phase === 'idle');
+  document.title = mine ? '🎲 ¡Tu turno! · Ouroboros' : BASE_TITLE;
   el.roll.disabled = !(human && G.phase === 'idle');
   el.reserve.disabled = !(human && G.phase === 'idle' && p.reserve != null);
   el.reserve.textContent = p.reserve != null ? `Usar reserva · ${p.reserve}` : 'Sin reserva';
@@ -1192,12 +1207,16 @@ function animProg(objs, dir, ms) {
 }
 
 function startTurn() {
-  const p = cur(), gid = G.gid; G.phase = 'idle'; G.dice = [null, null]; G.preview = null; G.doubles = false; G.bonus = false;
+  const p = cur(), gid = G.gid, extra = G.extraTurn; G.extraTurn = false; G.phase = 'idle'; G.dice = [null, null]; G.preview = null; G.doubles = false; G.bonus = false;
   el.dice.forEach(d => { d.className = 'die blank'; setDie(d, 0); }); el.opt.forEach(o => o.innerHTML = '');
   G.reserveShown = undefined; ui();
   const manual = p.human && !G.replay;
   if (manual) setPrompt(`Turno de ${who(p)} — lanza los dados${p.reserve != null ? ' o usa tu reserva' : ''}`);
   else setPrompt(`${who(p)} ${p.human ? 'juega' : 'está pensando'}…`);
+  if (manual) {
+    Sfx.turn();
+    if (!extra) flash(G.players.filter(q => q.human).length > 1 ? `TURNO DE ${p.name.toUpperCase()}` : '¡TU TURNO!', p.reserve != null ? 'lanza los dados o usa tu reserva' : 'lanza los dados', p.c.main, 1300, 'turn');
+  }
   if (!manual) autoTurn(gid);
 }
 
@@ -1333,7 +1352,7 @@ async function afterMove() {
   if (p.pos === 100) { win(p); return; }
   if (G.doubles || G.bonus) {
     if (G.doubles) { addLog('✨', `${who(p)} sacó dobles: <b>turno extra</b>`); flash('¡DOBLES!', 'turno extra', '#7dffcf', 1300); }
-    await sleep(G.doubles ? 900 : 500); if (G.gid !== gid) return; startTurn(); return;
+    await sleep(G.doubles ? 900 : 500); if (G.gid !== gid) return; G.extraTurn = true; startTurn(); return;
   }
   await sleep(350); if (G.gid !== gid) return;
   G.turn = (G.turn + 1) % G.players.length;
