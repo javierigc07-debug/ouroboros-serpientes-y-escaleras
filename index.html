@@ -252,6 +252,19 @@ kbd{font-family:inherit;border:1px solid var(--line);border-radius:5px;padding:0
 .compact{grid-template-columns:repeat(3,1fr);gap:8px;margin-top:0}
 .compact div{flex-direction:column;align-items:center;text-align:center;font-size:12.5px;gap:4px;background:rgba(255,255,255,.035);border-radius:12px;padding:10px 8px;line-height:1.3}
 .compact span{background:none;font-size:20px}
+.codeform{display:flex;gap:10px;margin-top:4px}
+.codeform input{flex:1;min-width:0;height:46px;border-radius:12px;border:1px solid var(--line);background:rgba(0,0,0,.3);color:var(--ink);font:inherit;font-size:17px;letter-spacing:.12em;text-align:center;padding:0 12px}
+.codeform input.wrong{animation:wrong .4s;border-color:var(--danger)}
+@keyframes wrong{20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+.cmsg{min-height:22px;margin-top:10px;font-size:14px;color:var(--mute);text-align:left}
+.cmsg.ok{color:var(--jade)}.cmsg.bad{color:#ff8a9b}
+.crow{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;text-align:left;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.04);margin-bottom:8px}
+.crow i{font-style:normal;font-size:24px}.crow b{display:block;font-weight:600}.crow small{color:var(--mute);font-size:12.5px;line-height:1.35;display:block;margin-top:2px}
+.crow .ghost{margin:0}
+.cnone{color:var(--mute);text-align:left;font-size:14px;padding:4px 0 10px}
+.chipcode{padding:5px 12px;border-radius:99px;background:rgba(255,93,115,.13);border:1px solid rgba(255,93,115,.3);color:#ffb3bd;font-size:13px}
+.lvfix{color:#ffb3bd;font-weight:600;font-size:13px;letter-spacing:.02em}
+.terr .chip.cd{background:rgba(255,93,115,.14);color:#ffb3bd}
 .hrow{display:grid;grid-template-columns:1fr auto;gap:4px 10px;text-align:left;padding:8px 12px;border-radius:10px;background:rgba(255,255,255,.035);margin-bottom:6px;font-size:14px}
 .hrow small{color:var(--mute);font-size:12px}
 .hrow .n{font-family:var(--display);font-weight:700;color:var(--gold2);font-size:18px;grid-row:span 2;align-self:center}
@@ -307,6 +320,7 @@ body.cb .gem::after{content:attr(data-s);font-size:13px;line-height:1;color:#101
         <button class="ib" id="btnSound" title="Efectos de sonido (M)" aria-label="Efectos de sonido">🔊</button>
         <button class="ib on" id="btnMusic" title="Música ambiental (N)" aria-label="Música ambiental">🎵</button>
         <button class="ib" id="btnCB" title="Modo daltónico" aria-label="Modo daltónico">◐</button>
+        <button class="ib" id="btnCodes" title="Códigos" aria-label="Códigos">🔑</button>
         <button class="ib" id="btnHist" title="Historial de victorias" aria-label="Historial">🏆</button>
         <button class="ib" id="btnRules" title="Reglas" aria-label="Reglas">?</button>
         <button class="ib" id="btnMenu" title="Nueva partida" aria-label="Nueva partida">⟲</button>
@@ -368,6 +382,8 @@ body.cb .gem::after{content:attr(data-s);font-size:13px;line-height:1;color:#101
       <button class="sw on" id="swEvents" title="Cada mutación trae un evento sorpresa">Eventos de mutación</button>
     </div>
 
+    <div class="opts" id="codeChips" style="margin-top:8px"></div>
+
     <h3>Cómo se juega</h3>
     <div class="rules compact" style="display:grid">
       <div><span>🎲</span><p>Lanzas <b>2 dados</b> y eliges uno</p></div>
@@ -377,6 +393,7 @@ body.cb .gem::after{content:attr(data-s);font-size:13px;line-height:1;color:#101
 
     <button class="btn primary go" id="btnStart">COMENZAR</button>
     <button class="ghost" id="btnDemo">Ver demo: la CPU juega sola</button>
+    <button class="ghost" id="btnCodes2" style="margin-left:14px">¿Tienes un código?</button>
   </div>
 </div>
 
@@ -411,6 +428,23 @@ body.cb .gem::after{content:attr(data-s);font-size:13px;line-height:1;color:#101
       <div><i>🤖</i><p><b>CPU</b>Novato, Normal o Astuta (mira el futuro).</p></div>
     </div>
     <button class="btn primary go" data-close="rulesModal">ENTENDIDO</button>
+  </div>
+</div>
+
+<!-- Códigos -->
+<div class="modal" id="codesModal">
+  <div class="mcard">
+    <h2 style="font-size:30px">CÓDIGOS</h2>
+    <div class="tag1">activa un modo especial para tu próxima partida</div>
+    <form id="codeForm" class="codeform" autocomplete="off">
+      <input id="codeIn" maxlength="16" placeholder="Escribe un código" aria-label="Código" spellcheck="false">
+      <button class="btn primary" type="submit" style="width:auto;padding:0 22px">ACTIVAR</button>
+    </form>
+    <div id="codeMsg" class="cmsg" role="status" aria-live="polite"></div>
+    <h3>Activos</h3>
+    <div id="codeList"></div>
+    <button class="btn primary go" data-close="codesModal">LISTO</button>
+    <button class="ghost" id="btnCodesOff">Quitar todos</button>
   </div>
 </div>
 
@@ -484,7 +518,8 @@ const SYMS = ['●', '▲', '■', '◆'];
 let cbMode = false;
 const SNAKE_HUES = [152, 18, 298, 196, 52, 350, 262, 100];
 const CPU_NAMES = ['Kaa', 'Apofis', 'Quetzal', 'Medusa'];
-const LEVELS = { easy: 'Novato', normal: 'Normal', hard: 'Astuta' };
+const LEVELS = { easy: 'Novato', normal: 'Normal', hard: 'Astuta', impossible: 'Imposible' };
+const LEVEL_KEYS = ['easy', 'normal', 'hard'];            // los que se pueden elegir; Imposible solo existe por código
 
 /* ═════════════ audio (WebAudio, sin archivos) ═════════════ */
 const Sfx = (() => {
@@ -830,6 +865,7 @@ function drawPawn(p, x, y, hop, active, alpha = 1) {
   const sh = clamp(1 - hop / (t * .9), .35, 1);
   ctx.fillStyle = 'rgba(0,0,0,.45)'; ctx.beginPath(); ctx.ellipse(0, t * .17, t * .2 * sh, t * .07 * sh, 0, 0, 7); ctx.fill();
   ctx.translate(0, -hop); ctx.translate(0, t * .15); ctx.scale(p.sx, p.sy); ctx.translate(0, -t * .15);
+  if (p.level === 'impossible') { const ag = ctx.createRadialGradient(0, -t * .05, t * .06, 0, -t * .05, t * .42); ag.addColorStop(0, 'rgba(255,40,70,0)'); ag.addColorStop(1, `rgba(255,40,70,${.28 + .14 * Math.sin(time * 4)})`); ctx.fillStyle = ag; ctx.beginPath(); ctx.arc(0, -t * .05, t * .42, 0, 7); ctx.fill(); }
   if (active) {
     ctx.strokeStyle = c.main; ctx.lineWidth = 2; ctx.globalAlpha = alpha * (.45 + .45 * Math.sin(time * 5.5));
     ctx.beginPath(); ctx.ellipse(0, t * .15, t * .3, t * .11, 0, 0, 7); ctx.stroke(); ctx.globalAlpha = alpha;
@@ -1049,6 +1085,8 @@ function fitWobble(snakes, ladders) {
   }
 }
 function applyLayout(lay) {
+  if (G.codes.has('paz')) lay = { ...lay, snakes: [], giant: -1 };        // código: sin serpientes
+  if (G.codes.has('veneno')) lay = { ...lay, ladders: [] };               // código: sin escaleras
   const hues = shuffle(SNAKE_HUES); G.profile = lay.profile;
   G.snakes = lay.snakes.map((s, i) => mkSnake(s, i, hues, i === lay.giant)); G.ladders = lay.ladders.map(mkLadder); fitWobble(G.snakes, G.ladders);
   G.specials = G.opts.special ? specialsFor(lay).map(mkSpecial) : [];
@@ -1105,7 +1143,7 @@ function renderPlayers() {
   el.players.innerHTML = G.players.map((p, i) => `
     <div class="pl${i === G.turn && !G.over ? ' active' : ''}" style="--c:${p.c.main}">
       <span class="gem" data-s="${SYMS[i]}"></span>
-      <b>${p.name}${p.shield ? ' 🛡️' : ''}${p.human ? '' : ` <small>· CPU ${LEVELS[p.level]}</small>`}</b>
+      <b>${p.name}${p.shield ? ' 🛡️' : ''}${p.human ? '' : ` <small>· CPU ${LEVELS[p.level]}${p.level === 'impossible' ? ' 💀' : ''}</small>`}</b>
       <div class="rv">RESERVA <span class="mini${p.reserve == null ? ' none' : ''}">${p.reserve == null ? '–' : p.reserve}</span></div>
       <small>Casilla ${p.pos}${p.pos === 100 ? ' 👑' : ''}</small>
       <div class="bar"><i style="width:${(p.pos - 1) / 99 * 100}%"></i></div>
@@ -1116,7 +1154,7 @@ function renderMut() {
   el.fuse.innerHTML = Array.from({ length: G.every }, (_, i) => `<i class="${i < G.sinceMut || G.phase === 'mutating' ? 'on' : ''}${i === G.sinceMut - 1 && left === 1 ? ' hot' : ''}"></i>`).join('');
   el.mutSub.textContent = G.phase === 'mutating' ? '¡Mutando!' : left === 1 ? 'Al final de esta ronda' : `En ${left} rondas`;
   el.rnd.textContent = G.round;
-  el.terr.innerHTML = G.profile ? `<span>Tablero</span><span class="chip">${G.profile.name}</span><span class="chip b">${biome.name}</span>${G.event ? `<span class="chip ev">${G.event.icon} ${G.event.name} · ${G.event.left} ronda${G.event.left > 1 ? 's' : ''}</span>` : ''}` : '';
+  el.terr.innerHTML = G.profile ? `<span>Tablero</span><span class="chip">${G.profile.name}</span><span class="chip b">${biome.name}</span>${[...G.codes].map(id => `<span class="chip cd" title="${CODE_BY_ID[id].desc}">${CODE_BY_ID[id].icon} ${CODE_BY_ID[id].name}</span>`).join('')}${G.event ? `<span class="chip ev">${G.event.icon} ${G.event.name} · ${G.event.left} ronda${G.event.left > 1 ? 's' : ''}</span>` : ''}` : '';
 }
 function renderDeck() {
   const p = G.players[G.turn], human = p.human && !G.over && !G.replay;
@@ -1167,18 +1205,21 @@ const allObjs = () => [...G.ladders, ...G.snakes, ...G.specials];
 function newGame(cfg, opts = {}) {
   const gid = ++gidCounter, seed = opts.seed != null ? opts.seed : (Math.random() * 4294967296) >>> 0;
   rng = mulberry32(seed); SPEED = opts.replay ? (opts.speed || 3) : 1;
-  const players = cfg.players.slice(0, cfg.n).map((p, i) => ({
-    id: i, name: p.name || (p.human ? 'Jugador ' + (i + 1) : CPU_NAMES[i]), human: !!p.human, level: p.level || 'normal', c: COLORS[i], pos: 1, reserve: null, shield: false,
-    moving: false, vx: 0, vy: 0, h: 0, ox: 0, oy: 0, px: 0, py: 0, sx: 1, sy: 1, flash: 0, snakes: 0, ladders: 0
-  }));
+  const codes = new Set(cfg.codes || []);
+  const players = cfg.players.slice(0, cfg.n).map((p, i) => {
+    const human = !!p.human, level = human ? (p.level || 'normal') : (codes.has('imposible') ? 'impossible' : codes.has('facil') ? 'easy' : (p.level || 'normal'));
+    const gift = human ? codes.has('tesoro') : level === 'impossible';                 // escudo + reserva de 6 al empezar
+    return { id: i, name: p.name || (human ? 'Jugador ' + (i + 1) : CPU_NAMES[i]), human, level, c: COLORS[i], pos: 1, reserve: gift ? 6 : null, shield: gift,
+      moving: false, vx: 0, vy: 0, h: 0, ox: 0, oy: 0, px: 0, py: 0, sx: 1, sy: 1, flash: 0, snakes: 0, ladders: 0 };
+  });
   G = {
-    gid, seed, turn: 0, round: 1, sinceMut: 0, every: cfg.every, mutations: 0, phase: 'idle', dice: [null, null], doubles: false, bonus: false,
+    gid, seed, turn: 0, round: 1, sinceMut: 0, every: codes.has('mutante') ? 1 : cfg.every, mutations: 0, codes, phase: 'idle', dice: [null, null], doubles: false, bonus: false,
     preview: null, snakes: [], ladders: [], specials: [], over: false, log: [], reserveShown: undefined, reserveOwner: -1, turns: 0,
     opts: { special: cfg.special !== false, events: cfg.events !== false }, event: null, lastEvent: null,
     replay: !!opts.replay, script: opts.script || [], players,
-    cfgSnap: { n: players.length, every: cfg.every, special: cfg.special !== false, events: cfg.events !== false, players: players.map(p => ({ name: p.name, human: p.human, level: p.level })) }
+    cfgSnap: { n: players.length, every: cfg.every, codes: [...codes], special: cfg.special !== false, events: cfg.events !== false, players: players.map(p => ({ name: p.name, human: p.human, level: p.level })) }
   };
-  const bio0 = pickNot(BIOMES, null), prof0 = PROFILES[rnd(0, PROFILES.length - 1)];
+  const bio0 = pickNot(BIOMES, null), prof0 = codes.has('kaa') ? PROFILES.find(x => x.giant) : PROFILES[rnd(0, PROFILES.length - 1)];
   setBiome(bio0, false); applyLayout(makeLayout(prof0));
   allObjs().forEach(o => { o.prog = 0; o.born = false; });
   setDie(el.dice[0], 0); setDie(el.dice[1], 0); el.dice.forEach(d => d.className = 'die blank'); el.opt.forEach(o => o.innerHTML = '');
@@ -1224,9 +1265,13 @@ async function rollDice() {
   if (!G || G.phase !== 'idle') return; const gid = G.gid, p = cur(); Sfx.init();
   G.phase = 'rolling'; G.preview = null; ui(); setPrompt(`${who(p)} lanza los dados…`); Sfx.roll();
   el.opt.forEach(o => o.innerHTML = ''); el.dice.forEach(d => { d.className = 'die rolling'; });
-  const [lo, hi] = (G.event && G.event.range) || [1, 6], t0 = performance.now();
+  let [lo, hi] = (G.event && G.event.range) || [1, 6]; if (p.human && G.codes.has('suerte')) lo = Math.max(lo, 3);
+  const t0 = performance.now();
   while (performance.now() - t0 < 820 / Math.min(SPEED, 3)) { setDie(el.dice[0], crnd(lo, hi)); setDie(el.dice[1], crnd(lo, hi)); await sleep(70); if (G.gid !== gid) return; }
-  const a = rnd(lo, hi), b = rnd(lo, hi); G.dice = [a, b]; G.doubles = a === b;
+  const nd = p.level === 'impossible' ? 4 : 2, roll = []; for (let k = 0; k < nd; k++) roll.push(rnd(lo, hi));
+  if (nd > 2) roll.sort((x, y) => y - x);
+  const a = roll[0], b = roll[1]; G.dice = [a, b]; G.doubles = a === b;
+  if (nd > 2) addLog('💀', `${who(p)} lanza ${nd} dados (${roll.join(', ')}) y se queda con los 2 mejores`);
   setDie(el.dice[0], a); setDie(el.dice[1], b);
   el.dice.forEach(d => { d.className = 'die land'; }); G.phase = 'choose';
   const fogged = G.event && G.event.fog && p.human && !G.replay;
@@ -1350,9 +1395,11 @@ async function doMove(p, steps, gid) {
 async function afterMove() {
   const gid = G.gid, p = cur();
   if (p.pos === 100) { win(p); return; }
-  if (G.doubles || G.bonus) {
+  const lucky = p.level === 'impossible' && !G.doubles && !G.bonus && rand() < .35;
+  if (G.doubles || G.bonus || lucky) {
+    if (lucky) { addLog('💀', `${who(p)} activa su ventaja: <b>turno extra</b>`); flash('💀 TURNO EXTRA', 'ventaja de la CPU imposible', '#ff5d73', 1300, 'evt'); }
     if (G.doubles) { addLog('✨', `${who(p)} sacó dobles: <b>turno extra</b>`); flash('¡DOBLES!', 'turno extra', '#7dffcf', 1300); }
-    await sleep(G.doubles ? 900 : 500); if (G.gid !== gid) return; G.extraTurn = true; startTurn(); return;
+    await sleep(G.doubles || lucky ? 900 : 500); if (G.gid !== gid) return; G.extraTurn = true; startTurn(); return;
   }
   await sleep(350); if (G.gid !== gid) return;
   G.turn = (G.turn + 1) % G.players.length;
@@ -1401,7 +1448,7 @@ async function runEvent(gid) {
 }
 
 async function mutate(gid) {
-  const prof = pickNot(PROFILES, G.profile), bio = pickNot(BIOMES, biome);
+  const prof = G.codes.has('kaa') ? PROFILES.find(x => x.giant) : pickNot(PROFILES, G.profile), bio = pickNot(BIOMES, biome);
   G.phase = 'mutating'; G.preview = null; ui(); setPrompt('<b>El tablero está mutando…</b>');
   flash('¡MUTACIÓN!', `${prof.name} · ${bio.name}`, '#c9a6ff', 2300, 'mut'); Sfx.mutate(); shake(); wave(S / 2, S / 2, '#a97bff', 1500);
   await sleep(750); if (G.gid !== gid) return;
@@ -1430,7 +1477,8 @@ function win(p) {
   $('#winStats').innerHTML = [['turnos', G.turns], ['rondas', G.round], ['mutaciones', G.mutations], ['serpientes', G.players.reduce((s, q) => s + q.snakes, 0)]]
     .map(([k, v]) => `<div><b>${v}</b><small>${k}</small></div>`).join('');
   const wn = $('#winName'); wn.textContent = p.name; wn.style.webkitTextFillColor = 'transparent';
-  $('#winRec').textContent = wasReplay ? 'fin de la repetición' : recordWin(p);
+  $('#winRec').textContent = wasReplay ? 'fin de la repetición' : (p.human && G.players.some(q => q.level === 'impossible') ? '💀 ¡Derrotaste a la CPU Imposible!' : recordWin(p));
+  if (!wasReplay && p.human && G.players.some(q => q.level === 'impossible')) recordWin(p);
   $('#btnReplay').hidden = !lastGame;
   setTimeout(() => { if (G.over) $('#winModal').classList.add('show'); }, 2600);
 }
@@ -1464,7 +1512,7 @@ function cpuPickDie(p) {
   let best = 0, bs = -1e9;
   for (let i = 0; i < 2; i++) {
     const v = G.dice[i], o = G.dice[1 - i], e = evalMove(p.pos, v); let s;
-    if (p.level === 'hard') {
+    if (p.level === 'hard' || p.level === 'impossible') {
       const w = boardChangesSoon() ? .12 : .6;
       s = val(e) + w * Math.max(rollGain(e.dest), val(evalMove(e.dest, o)) - e.dest);
     } else {
@@ -1477,7 +1525,7 @@ function cpuPickDie(p) {
   return best;
 }
 async function cpuTurn(gid) {
-  const p = cur(), think = { easy: 700, normal: 1000, hard: 1300 }[p.level] || 1000;
+  const p = cur(), think = { easy: 700, normal: 1000, hard: 1300, impossible: 1300 }[p.level] || 1000;
   await sleep(think); if (G.gid !== gid || G.over) return;
   if (cpuWantsReserve(p)) { G.preview = evalMove(p.pos, p.reserve); await sleep(900); if (G.gid !== gid) return; useReserve(); return; }
   await rollDice(); if (G.gid !== gid || G.over) return;
@@ -1577,15 +1625,57 @@ function renderHist() {
 $('#btnHist').onclick = () => { renderHist(); $('#histModal').classList.add('show'); };
 $('#btnHistClear').onclick = () => { store.set('ouro.hist', []); renderHist(); };
 
+/* ═════════════ códigos secretos ═════════════ */
+const CODES = {
+  '67':      { id: 'imposible', icon: '💀', name: 'CPU Imposible', group: 'cpu', desc: 'La CPU juega con ventajas: 4 dados (se queda con los 2 mejores), escudo y reserva de inicio, y turnos extra. Muy difícil, pero se puede ganar.' },
+  'facil':   { id: 'facil', icon: '😴', name: 'CPU dormida', group: 'cpu', desc: 'Todas las CPU juegan como Novato.' },
+  '777':     { id: 'suerte', icon: '🍀', name: 'Suerte de principiante', desc: 'Tus dados valen de 3 a 6.' },
+  'tesoro':  { id: 'tesoro', icon: '🎁', name: 'Tesoro inicial', desc: 'Los humanos empiezan con un escudo y un 6 de reserva.' },
+  'mutante': { id: 'mutante', icon: '🌀', name: 'Mutación constante', desc: 'El tablero muta en todas las rondas.' },
+  'kaa':     { id: 'kaa', icon: '🐍', name: 'Reino de Kaa', desc: 'Todos los tableros incluyen La Gran Serpiente.' },
+  'paz':     { id: 'paz', icon: '🕊️', name: 'Modo paz', group: 'board', desc: 'Sin serpientes: solo escaleras.' },
+  'veneno':  { id: 'veneno', icon: '☠️', name: 'Modo veneno', group: 'board', desc: 'Sin escaleras: solo serpientes.' }
+};
+const CODE_BY_ID = Object.fromEntries(Object.values(CODES).map(c => [c.id, c]));
+const activeCodes = () => new Set(store.get('ouro.codes', []).filter(id => CODE_BY_ID[id]));
+function setCodes(set) { store.set('ouro.codes', [...set]); renderCodes(); renderSetup(); if (G) renderMut(); }
+function tryCode(raw) {
+  const key = raw.trim().toLowerCase().replace(/\s+/g, ''), msg = $('#codeMsg'), input = $('#codeIn');
+  if (!key) return;
+  if (key === 'reset' || key === 'borrar') { setCodes(new Set()); msg.textContent = 'Códigos desactivados.'; msg.className = 'cmsg'; return; }
+  const c = CODES[key];
+  if (!c) { msg.textContent = 'Ese código no existe.'; msg.className = 'cmsg bad'; input.classList.remove('wrong'); void input.offsetWidth; input.classList.add('wrong'); return; }
+  const set = activeCodes();
+  if (set.has(c.id)) { msg.textContent = `${c.icon} ${c.name} ya estaba activo.`; msg.className = 'cmsg'; return; }
+  if (c.group) Object.values(CODES).forEach(o => { if (o.group === c.group) set.delete(o.id); });
+  set.add(c.id); setCodes(set); Sfx.init(); Sfx.chest();
+  msg.innerHTML = `${c.icon} <b>${c.name}</b> activado. Se aplica en tu próxima partida.`; msg.className = 'cmsg ok';
+}
+function renderCodes() {
+  const list = [...activeCodes()].map(id => CODE_BY_ID[id]);
+  $('#codeList').innerHTML = list.length ? list.map(c => `<div class="crow"><i>${c.icon}</i><div><b>${c.name}</b><small>${c.desc}</small></div><button class="ghost" data-off="${c.id}">Quitar</button></div>`).join('') : '<p class="cnone">Ningún código activo.</p>';
+  $('#codeChips').innerHTML = list.map(c => `<span class="chipcode" title="${c.desc}">${c.icon} ${c.name}</span>`).join('');
+  $('#btnCodes').classList.toggle('on', list.length > 0); $('#btnCodesOff').hidden = !list.length;
+}
+$('#codeForm').onsubmit = e => { e.preventDefault(); tryCode($('#codeIn').value); $('#codeIn').value = ''; };
+$('#codeList').onclick = e => { const b = e.target.closest('[data-off]'); if (!b) return; const s = activeCodes(); s.delete(b.dataset.off); setCodes(s); };
+$('#btnCodesOff').onclick = () => setCodes(new Set());
+const openCodes = () => { renderCodes(); $('#codeMsg').textContent = ''; $('#codesModal').classList.add('show'); setTimeout(() => $('#codeIn').focus(), 60); };
+$('#btnCodes').onclick = openCodes; $('#btnCodes2').onclick = openCodes;
+
 /* ═════════════ configuración de partida ═════════════ */
 const cfg = { n: 2, every: 3, special: true, events: true, players: [0, 1, 2, 3].map(i => ({ name: '', human: i === 0, level: 'normal' })) };
+function cpuLevelRow(p, i) {
+  const c = activeCodes(), fixed = c.has('imposible') ? '💀 Imposible' : c.has('facil') ? '😴 Novato' : '';
+  return `<div class="lv"><span>Nivel de la CPU</span>${fixed ? `<b class="lvfix">${fixed} (por código)</b>` : `<div class="seg sm" data-l="${i}">${LEVEL_KEYS.map(k => `<button data-v="${k}" class="${p.level === k ? 'on' : ''}">${LEVELS[k]}</button>`).join('')}</div>`}</div>`;
+}
 function renderSetup() {
   $('#prows').innerHTML = cfg.players.slice(0, cfg.n).map((p, i) => `
     <div class="prow" style="--c:${COLORS[i].main}">
       <span class="gem" data-s="${SYMS[i]}" style="--c:${COLORS[i].main};grid-row:auto"></span>
       <input data-i="${i}" maxlength="12" placeholder="${p.human ? 'Jugador ' + (i + 1) : CPU_NAMES[i]}" value="${p.name}">
       <div class="seg" data-h="${i}"><button data-v="1" class="${p.human ? 'on' : ''}">Humano</button><button data-v="0" class="${p.human ? '' : 'on'}">CPU</button></div>
-      ${p.human ? '' : `<div class="lv"><span>Nivel de la CPU</span><div class="seg sm" data-l="${i}">${Object.keys(LEVELS).map(k => `<button data-v="${k}" class="${p.level === k ? 'on' : ''}">${LEVELS[k]}</button>`).join('')}</div></div>`}
+      ${p.human ? '' : cpuLevelRow(p, i)}
     </div>`).join('');
 }
 $('#prows').addEventListener('input', e => { if (e.target.dataset.i != null) cfg.players[+e.target.dataset.i].name = e.target.value.trim(); });
@@ -1599,7 +1689,7 @@ $('#segE').onclick = e => { const b = e.target.closest('button'); if (!b) return
 $('#swSpecial').onclick = e => { cfg.special = !cfg.special; e.currentTarget.classList.toggle('on', cfg.special); };
 $('#swEvents').onclick = e => { cfg.events = !cfg.events; e.currentTarget.classList.toggle('on', cfg.events); };
 
-function start(c, opts) { Sfx.init(); Music.start(); if (G) G.gid = -1; $('#setup').classList.remove('show'); $('#winModal').classList.remove('show'); newGame(c, opts); }
+function start(c, opts) { if (!c.codes) c.codes = [...activeCodes()]; Sfx.init(); Music.start(); if (G) G.gid = -1; $('#setup').classList.remove('show'); $('#winModal').classList.remove('show'); newGame(c, opts); }
 $('#btnStart').onclick = () => start(cfg);
 $('#btnDemo').onclick = () => start({ n: Math.max(3, cfg.n), every: cfg.every, special: cfg.special, events: cfg.events, players: ['hard', 'normal', 'easy', 'normal'].map(level => ({ name: '', human: false, level })) });
 const openMenu = () => { if (G) G.gid = -1; SPEED = 1; $('#replayBar').hidden = true; confettiOn = false; $('#winModal').classList.remove('show'); $('#setup').classList.add('show'); };
@@ -1616,6 +1706,7 @@ $('#btnRepExit').onclick = () => { if (G) G.gid = -1; SPEED = 1; $('#replayBar')
 setCB(!!store.get('ouro.cb', false));
 if (store.get('ouro.sfx', true) === false) { Sfx.toggle(); $('#btnSound').textContent = '🔇'; }
 if (store.get('ouro.music', true) === false) { Music.set(false); $('#btnMusic').classList.remove('on'); }
+renderCodes();
 renderSetup();
 resize();
 requestAnimationFrame(frame);
