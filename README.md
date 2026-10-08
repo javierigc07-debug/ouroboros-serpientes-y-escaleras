@@ -17,7 +17,7 @@ Un solo archivo HTML, sin dependencias ni instalación: abre `index.html` en el 
 - **Aviso de turno:** banner, sonido, flecha sobre tu ficha y la tarjeta de dados que late, para que nunca dudes cuándo te toca.
 - **Escaleras equilibradas:** cada perfil limita cuánto puede subir una escalera y cuánto bajar una serpiente.
 - **Códigos secretos** 🔑: activan modos especiales para la próxima partida (uno de ellos desbloquea una CPU de dificultad extrema, difícil pero ganable). Descubre cuáles.
-- **Skins** ✎: personaliza tu ficha con 12 colores (o uno libre) y 12 personajes: peón, gema, tejedor, noche, calavera, robot, fantasma, ninja, astronauta, gato y las skins de marca **Nestea** y **Tom**. También puedes usar **un emoji** como cabeza. Dos jugadores no pueden compartir color.
+- **Skins** ✎: personaliza tu ficha con 12 colores (o uno libre) y 12 personajes: peón, gema, tejedor, noche, calavera, robot, fantasma, ninja, astronauta, gato y y dos fichas distintas: un **vaso de Nestea** (sabor durazno) y un **tostón** de Tom. También puedes usar **un emoji** como cabeza. Dos jugadores no pueden compartir color.
 - **Landing page** con una partida real corriendo de fondo, tableros de muestra generados en vivo y música por terreno.
 
 ### Perfiles de tablero
