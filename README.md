@@ -17,6 +17,7 @@ Un solo archivo HTML, sin dependencias ni instalación: abre `index.html` en el 
 - **Aviso de turno:** banner, sonido, flecha sobre tu ficha y la tarjeta de dados que late, para que nunca dudes cuándo te toca.
 - **Escaleras equilibradas:** cada perfil limita cuánto puede subir una escalera y cuánto bajar una serpiente.
 - **Códigos secretos** 🔑: activan modos especiales para la próxima partida (uno de ellos desbloquea una CPU de dificultad extrema, difícil pero ganable). Descubre cuáles.
+- **Casilla de mutación** 🧬: por defecto el tablero ya no cambia por rondas, sino cuando alguien pisa una casilla 🧬 (también puedes elegir que mute cada 3 rondas, o ambas).
 - **Modo educativo** 🎓 (por defecto): casillas ❓ con preguntas de **combinatoria** (permutaciones, combinaciones, con repetición, circulares, «al menos uno») y de cultura general. Acertar da un **dado dorado** (eliges el número); fallar cuesta una de tus 3 vidas. Al terminar ganas **monedas** 🪙 y **estrellas** ⭐ para comprar skins. El código `libre` lo desactiva.
 - **Instalable (PWA)** 📲: funciona sin conexión y se instala en el móvil desde el navegador (Chrome → «Instalar aplicación»).
 - **Modo ligero** ⚡: se activa solo en equipos modestos (o con el botón del panel): menos efectos, 30 fps y resolución reducida.

@@ -602,7 +602,7 @@ body.landing #landing,body.landing .climb{display:block}
 
     <section class="card mut">
       <div>
-        <div class="lab">Próxima mutación</div>
+        <div class="lab" id="mutLab">Próxima mutación</div>
         <div class="sub" id="mutSub">—</div>
       </div>
       <div class="fuse" id="fuse"></div>
@@ -759,9 +759,9 @@ body.landing #landing,body.landing .climb{display:block}
         <div id="prows" style="margin-top:10px"></div>
       </div>
       <div class="scol">
-        <h3>El tablero muta cada</h3>
+        <h3>El tablero muta</h3>
         <div class="seg full" id="segE">
-          <button data-e="2">2 rondas</button><button data-e="3" class="on">3 rondas</button><button data-e="4">4 rondas</button>
+          <button data-m="tile" class="on" title="Al caer en una casilla 🧬">Casilla 🧬</button><button data-m="rounds" title="Cada 3 rondas">Cada 3 rondas</button><button data-m="both">Ambas</button>
         </div>
         <h3>Extras</h3>
         <div class="opts">
@@ -794,7 +794,7 @@ body.landing #landing,body.landing .climb{display:block}
       <div><span>🎲</span><p>En tu turno lanzas <b>2 dados</b> y avanzas con <b>uno de ellos</b>. Pasa el cursor por un dado para ver dónde caerías.</p></div>
       <div><span>📦</span><p>El dado sobrante pasa a tu <b>reserva</b> (reemplaza al anterior). Más tarde puedes <b>gastarla en vez de lanzar</b>: ideal para esquivar una serpiente o clavar una escalera.</p></div>
       <div><span>✨</span><p><b>Dobles</b> (dos números iguales) dan <b>turno extra</b>. Debes caer <b>exacto</b> en la 100; si te pasas, rebotas.</p></div>
-      <div><span>🌀</span><p>Cuando el medidor se llena, <b>el tablero muta</b>: nuevas serpientes y escaleras, nuevo terreno y un <b>evento sorpresa</b>.</p></div>
+      <div><span>🧬</span><p>Al pisar una casilla <b>🧬 de mutación</b>, <b>el tablero cambia entero</b>: nuevas serpientes y escaleras, nuevo terreno y un <b>evento sorpresa</b>. También puedes elegir que mute cada 3 rondas.</p></div>
     </div>
     <h3>Casillas especiales <small style="letter-spacing:.1em">(pasa el cursor para ver su efecto)</small></h3>
     <div class="legend">
@@ -803,6 +803,7 @@ body.landing #landing,body.landing .climb{display:block}
       <div><i>🕸️</i><p><b>Telaraña</b>Pierdes tu dado de reserva.</p></div>
       <div><i>🎁</i><p><b>Cofre</b>Ganas un 5 o 6 de reserva.</p></div>
       <div><i>🛡️</i><p><b>Escudo</b>La próxima serpiente no te baja.</p></div>
+      <div><i>🧬</i><p><b>Mutación</b>Cambia todo el tablero.</p></div>
       <div><i>❓</i><p><b>Pregunta</b>Modo educativo: combinatoria y cultura general.</p></div>
     </div>
     <h3>Modo educativo</h3>
@@ -1769,15 +1770,17 @@ const SPECIALS = {
   web:    { icon: '🕸️', name: 'Telaraña',   color: '#cfd8dc', desc: 'Pierdes tu dado de reserva.' },
   chest:  { icon: '🎁', name: 'Cofre',      color: '#ff9ee0', desc: 'Ganas un dado de reserva de 5 o 6.' },
   shield: { icon: '🛡️', name: 'Escudo',     color: '#7fd3ff', desc: 'La próxima serpiente que te muerda no te baja.' },
+  mutate: { icon: '🧬', name: 'Mutación',   color: '#ff7bd5', desc: '¡El tablero cambia entero! Nuevas serpientes, escaleras, casillas y terreno.' },
   quiz:   { icon: '❓', name: 'Pregunta',   color: '#5fd7ff', desc: 'Modo educativo: acierta y ganas un dado dorado; falla y pierdes una vida.' }
 };
-// modo educativo: 2-3 casillas de pregunta por tablero (más en el caos), aunque las especiales estén desactivadas
-function quizTiles(lay, taken) {
+// casillas extra de cada tablero: 🧬 mutación (si el modo de mutación las incluye) y ❓ preguntas (modo educativo), aunque las especiales estén desactivadas
+function extraTiles(lay, taken) {
   const used = new Set([1, 100, ...taken.map(s => s.from || s.sq)]), segs = [];
   [...lay.snakes, ...lay.ladders].forEach(([a, b]) => { used.add(a); used.add(b); segs.push([cellU(a), cellU(b)]); });
   const free = []; for (let n = 2; n <= 99; n++) { if (used.has(n)) continue; const c = cellU(n); if (segs.every(([A, B]) => ptSeg(c, A, B) >= .8)) free.push(n); }
-  const out = [], n = (G.codes.has('caos') ? 4 : 2) + rnd(0, 1);
-  for (let i = 0; i < n && free.length; i++) out.push({ kind: 'quiz', sq: free.splice(rnd(0, free.length - 1), 1)[0], to: null });
+  const out = [], chaos = G.codes.has('caos'), take = kind => { if (free.length) out.push({ kind, sq: free.splice(rnd(0, free.length - 1), 1)[0], to: null }); };
+  if (G.tileMut) for (let i = chaos ? rnd(2, 3) : rnd(1, 2); i > 0; i--) take('mutate');
+  if (G.edu) for (let i = chaos ? rnd(6, 8) : rnd(4, 6); i > 0; i--) take('quiz');
   return out;
 }
 function specialsFor(lay) {
@@ -1817,7 +1820,7 @@ function applyLayout(lay) {
   const hues = shuffle(SNAKE_HUES); G.profile = lay.profile;
   G.snakes = lay.snakes.map((s, i) => mkSnake(s, i, hues, i === lay.giant)); G.ladders = lay.ladders.map(mkLadder); fitWobble(G.snakes, G.ladders);
   const sp = G.opts.special ? specialsFor(lay) : [];
-  if (G.edu) sp.push(...quizTiles(lay, sp));
+  sp.push(...extraTiles(lay, sp));
   G.specials = sp.map(mkSpecial);
   buildJumps();
 }
@@ -1880,9 +1883,10 @@ function renderPlayers() {
   refreshAvatars();
 }
 function renderMut() {
-  const left = G.every - G.sinceMut;
+  const left = G.every - G.sinceMut, nT = G.specials.filter(s => s.kind === 'mutate').length;
+  $('#mutLab').textContent = G.every > 0 ? 'Próxima mutación' : 'Mutación';
   el.fuse.innerHTML = Array.from({ length: G.every }, (_, i) => `<i class="${i < G.sinceMut || G.phase === 'mutating' ? 'on' : ''}${i === G.sinceMut - 1 && left === 1 ? ' hot' : ''}"></i>`).join('');
-  el.mutSub.textContent = G.phase === 'mutating' ? '¡Mutando!' : left === 1 ? 'Al final de esta ronda' : `En ${left} rondas`;
+  el.mutSub.textContent = G.phase === 'mutating' ? '¡Mutando!' : G.every === 0 ? (nT ? `Pisa una casilla 🧬 (${nT})` : 'Sin casillas 🧬 ahora') : (left === 1 ? 'Al final de esta ronda' : `En ${left} rondas`) + (nT ? ` · 🧬 ${nT}` : '');
   el.rnd.textContent = G.round;
   el.terr.innerHTML = G.profile ? `<span>Tablero</span><span class="chip">${G.profile.name}</span><span class="chip b">${biome.name}</span>${G.edu ? '<span class="chip cd" title="Casillas ❓ con preguntas de combinatoria y cultura general. El código «libre» lo desactiva.">🎓 Educativo</span>' : ''}${[...G.codes].map(id => `<span class="chip cd" title="${CODE_BY_ID[id].desc}">${CODE_BY_ID[id].icon} ${CODE_BY_ID[id].name}</span>`).join('')}${G.event ? `<span class="chip ev">${G.event.icon} ${G.event.name} · ${G.event.left} ronda${G.event.left > 1 ? 's' : ''}</span>` : ''}` : '';
 }
@@ -1948,11 +1952,11 @@ function newGame(cfg, opts = {}) {
       moving: false, vx: 0, vy: 0, h: 0, ox: 0, oy: 0, sc: 1, px: 0, py: 0, sx: 1, sy: 1, flash: 0, snakes: 0, ladders: 0, hearts: 3, gold: 0, asked: 0, right: 0 };
   });
   G = {
-    gid, seed, t0: Date.now(), edu: !!window.QBANK && !codes.has('libre') && !opts.demo, qUsed: new Set(), turn: 0, round: 1, sinceMut: 0, every: codes.has('mutante') || codes.has('caos') ? 1 : cfg.every, mutations: 0, codes, phase: 'idle', dice: [null, null], doubles: false, bonus: false,
+    gid, seed, t0: Date.now(), edu: !!window.QBANK && !codes.has('libre') && !opts.demo, qUsed: new Set(), turn: 0, round: 1, sinceMut: 0, every: codes.has('mutante') || codes.has('caos') ? 1 : (cfg.mut === 'tile' ? 0 : cfg.every || 3), tileMut: cfg.mut ? cfg.mut !== 'rounds' : codes.has('caos'), mutations: 0, codes, phase: 'idle', dice: [null, null], doubles: false, bonus: false,
     preview: null, snakes: [], ladders: [], specials: [], over: false, log: [], reserveShown: undefined, reserveOwner: -1, turns: 0,
     opts: { special: cfg.special !== false || codes.has('caos'), events: cfg.events !== false || codes.has('caos') }, event: null, lastEvent: null,
     replay: !!opts.replay, demo: !!opts.demo, script: opts.script || [], players,
-    cfgSnap: { n: players.length, every: cfg.every, codes: [...codes], special: cfg.special !== false, events: cfg.events !== false, players: players.map(p => ({ name: p.name, human: p.human, level: p.level, skin: p.skin })) }
+    cfgSnap: { n: players.length, every: cfg.every, mut: cfg.mut, codes: [...codes], special: cfg.special !== false, events: cfg.events !== false, players: players.map(p => ({ name: p.name, human: p.human, level: p.level, skin: p.skin })) }
   };
   document.body.classList.toggle('chaos', codes.has('caos'));
   const bio0 = pickNot(BIOMES, null), prof0 = forcedProfile() || PROFILES[rnd(0, PROFILES.length - 1)];
@@ -2111,6 +2115,9 @@ async function resolveSpecial(p, sp) {
     Sfx.shield(); p.shield = true; flash('¡ESCUDO!', 'bloquea tu próxima serpiente', info.color, 1300); addLog('🛡️', `${who(p)} recoge un escudo`); ui(); await sleep(700);
   } else if (sp.kind === 'quiz') {
     if (G.edu) await askQuestion(p, G.gid);
+  } else if (sp.kind === 'mutate') {
+    addLog('🧬', `${who(p)} pisa una casilla de mutación`); const gid = G.gid; flash('🧬 ¡MUTACIÓN!', `${p.name} cambia el tablero`, info.color, 1400, 'mut'); await sleep(900); if (G.gid !== gid) return;
+    await mutate(gid);
   }
 }
 /* ═════════════ modo educativo: preguntas, vidas y dado dorado ═════════════ */
@@ -2258,7 +2265,7 @@ async function afterMove() {
   if (G.turn === 0) {
     G.round++; G.sinceMut++;
     if (G.event && G.event.left > 0 && --G.event.left <= 0) { addLog('🌤️', `Terminó el evento: ${G.event.name}`); G.event = null; ui(); }
-    if (G.sinceMut >= G.every) { await mutate(gid); if (G.gid !== gid) return; G.sinceMut = 0; }
+    if (G.every > 0 && G.sinceMut >= G.every) { await mutate(gid); if (G.gid !== gid) return; G.sinceMut = 0; }
   }
   startTurn();
 }
@@ -2313,7 +2320,7 @@ async function mutate(gid) {
   setBiome(bio, true); applyLayout(makeLayout(prof)); ui();
   wave(S / 2, S / 2, fast ? '#3df0ff' : '#7dffcf', 1300);
   await animProg(shuffle(allObjs()), 1, fast ? 750 : 1200); if (G.gid !== gid) return;
-  G.mutations++; addLog('🌀', `El tablero <b>mutó</b>: ${G.profile.name} · ${biome.name} (${G.snakes.length}🐍 ${G.ladders.length}🪜${G.specials.length ? ' ' + G.specials.length + '✨' : ''})`);
+  G.mutations++; G.sinceMut = 0; addLog('🌀', `El tablero <b>mutó</b>: ${G.profile.name} · ${biome.name} (${G.snakes.length}🐍 ${G.ladders.length}🪜${G.specials.length ? ' ' + G.specials.length + '✨' : ''})`);
   await sleep(fast ? 120 : 250);
   if (G.opts.events) {
     await runEvent(gid); if (G.gid !== gid) return;
@@ -2361,7 +2368,7 @@ function rollGain(pos) {
   return sum / n - pos;
 }
 // si esta es la última ronda antes de mutar, mirar al futuro no sirve: el tablero va a cambiar
-const boardChangesSoon = () => G.sinceMut + 1 >= G.every;
+const boardChangesSoon = () => G.every > 0 && G.sinceMut + 1 >= G.every;
 function cpuWantsReserve(p) {
   if (p.reserve == null) return false;
   if (p.level === 'easy') return rand() < .15;
@@ -2549,7 +2556,7 @@ const openCodes = () => { renderCodes(); $('#codeMsg').textContent = ''; $('#cod
 $('#btnCodes').onclick = openCodes; $('#btnCodes2').onclick = openCodes;
 
 /* ═════════════ configuración de partida ═════════════ */
-const cfg = { n: 2, every: 3, special: true, events: true, players: [0, 1, 2, 3].map(i => ({ name: '', human: i === 0, level: 'normal', skin: defaultSkin(i) })) };
+const cfg = { n: 2, every: 3, mut: 'tile', special: true, events: true, players: [0, 1, 2, 3].map(i => ({ name: '', human: i === 0, level: 'normal', skin: defaultSkin(i) })) };
 function cpuLevelRow(p, i) {
   const c = activeCodes(), fixed = c.has('imposible') ? '💀 Imposible' : c.has('facil') ? '😴 Novato' : '';
   return `<div class="lv"><span>Nivel de la CPU</span>${fixed ? `<b class="lvfix">${fixed} (por código)</b>` : `<div class="seg sm" data-l="${i}">${LEVEL_KEYS.map(k => `<button data-v="${k}" class="${p.level === k ? 'on' : ''}">${LEVELS[k]}</button>`).join('')}</div>`}</div>`;
@@ -2571,13 +2578,13 @@ $('#prows').addEventListener('click', e => {
   renderSetup();
 });
 $('#segN').onclick = e => { const b = e.target.closest('button'); if (!b) return; cfg.n = +b.dataset.n; [...$('#segN').children].forEach(x => x.classList.toggle('on', x === b)); renderSetup(); };
-$('#segE').onclick = e => { const b = e.target.closest('button'); if (!b) return; cfg.every = +b.dataset.e; [...$('#segE').children].forEach(x => x.classList.toggle('on', x === b)); };
+$('#segE').onclick = e => { const b = e.target.closest('button'); if (!b) return; cfg.mut = b.dataset.m; [...$('#segE').children].forEach(x => x.classList.toggle('on', x === b)); };
 $('#swSpecial').onclick = e => { cfg.special = !cfg.special; e.currentTarget.classList.toggle('on', cfg.special); };
 $('#swEvents').onclick = e => { cfg.events = !cfg.events; e.currentTarget.classList.toggle('on', cfg.events); };
 
 function start(c, opts) { c = { ...c, players: c.players.map(p => ({ ...p, skin: p.skin ? ownedSkin({ ...p.skin }) : undefined })) }; closeQuizUi(); uniqueColors(c.players.slice(0, c.n)); document.body.classList.remove('landing'); if (!c.codes) c.codes = [...activeCodes()]; Sfx.init(); Music.start(); if (G) G.gid = -1; $('#setup').classList.remove('show'); $('#winModal').classList.remove('show'); newGame(c, opts); }
 $('#btnStart').onclick = () => start(cfg);
-$('#btnDemo').onclick = () => start({ n: Math.max(3, cfg.n), every: cfg.every, special: cfg.special, events: cfg.events, players: ['hard', 'normal', 'easy', 'normal'].map((level, i) => ({ name: '', human: false, level, skin: cfg.players[i].skin })) });
+$('#btnDemo').onclick = () => start({ n: Math.max(3, cfg.n), every: cfg.every, mut: cfg.mut, special: cfg.special, events: cfg.events, players: ['hard', 'normal', 'easy', 'normal'].map((level, i) => ({ name: '', human: false, level, skin: cfg.players[i].skin })) });
 // cierra la pregunta o el dado dorado si se abandona la partida
 function closeQuizUi() { if (G && G.quizResolve) G.quizResolve(); $('#quizModal').classList.remove('show'); $('#goldModal').classList.remove('show'); }
 const openMenu = () => { closeQuizUi(); if (G) G.gid = -1; SPEED = 1; $('#replayBar').hidden = true; confettiOn = false; $('#winModal').classList.remove('show'); $('#setup').classList.add('show'); };

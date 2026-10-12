@@ -27,7 +27,7 @@
       return { q: `Eduardo tiene ${n} libros. ¿De cuántas maneras puede acomodar ${r} de ellos en un estante?`, ans: a, bad: [C(n, r), Math.pow(n, r), fact(n)],
         why: `El orden en el estante importa: P(${n},${r}) = ${n}!/${n - r}! = ${fmt(a)}.` }; } },
     { dif: 1, f: rnd => { const n = rnd(7, 12), r = rnd(2, 4), isC = rnd(0, 1) === 1, a = isC ? C(n, r) : P(n, r);
-      return { q: `Calcula ${isC ? 'C' : 'P'}(${n}, ${r}).`, ans: a, bad: isC ? [P(n, r), C(n, r - 1), C(n + 1, r)] : [C(n, r), P(n, r - 1), P(n + 1, r)],
+      return { q: isC ? `¿Cuánto vale C(${n}, ${r})? Es decir, ¿de cuántas formas se pueden escoger ${r} elementos de un grupo de ${n}, sin importar el orden?` : `¿Cuánto vale P(${n}, ${r})? Es decir, ¿de cuántas formas se pueden ordenar ${r} elementos escogidos de un grupo de ${n}, donde el orden sí importa?`, ans: a, bad: isC ? [P(n, r), C(n, r - 1), C(n + 1, r)] : [C(n, r), P(n, r - 1), P(n + 1, r)],
         why: isC ? `C(n,r) = n!/(r!(n−r)!) → ${n}!/(${r}!·${n - r}!) = ${fmt(a)}.` : `P(n,r) = n!/(n−r)! → ${n}!/${n - r}! = ${fmt(a)}.` }; } },
     { dif: 1, f: rnd => { const n = rnd(5, 12), a = C(n, 2);
       return { q: `En un torneo de ajedrez juegan ${n} personas, cada una contra todas las demás una sola vez (sin revancha). ¿Cuántas partidas hay?`, ans: a, bad: [n * (n - 1), n * n, C(n, 3)],
