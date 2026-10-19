@@ -1,7 +1,7 @@
 // Service worker de Ouroboros: permite jugar sin conexión.
 // Sube VERSION cuando cambies archivos para que los dispositivos descarguen lo nuevo.
-const VERSION = 'ouro-v3';
-const CORE = ['./', './index.html', './preguntas.js', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/icon-maskable-512.png', './icons/apple-touch-icon.png'];
+const VERSION = 'ouro-v4';
+const CORE = ['./', './index.html', './preguntas.js', './net.js', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/icon-maskable-512.png', './icons/apple-touch-icon.png'];
 
 self.addEventListener('install', e => { e.waitUntil(caches.open(VERSION).then(c => c.addAll(CORE)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => {

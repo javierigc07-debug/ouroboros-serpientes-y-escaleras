@@ -19,6 +19,7 @@ Un solo archivo HTML, sin dependencias ni instalación: abre `index.html` en el 
 - **Códigos secretos** 🔑: activan modos especiales para la próxima partida (uno de ellos desbloquea una CPU de dificultad extrema, difícil pero ganable). Descubre cuáles.
 - **Casilla de mutación** 🧬: por defecto el tablero ya no cambia por rondas, sino cuando alguien pisa una casilla 🧬 (también puedes elegir que mute cada 3 rondas, o ambas).
 - **Modo educativo** 🎓 (por defecto): casillas ❓ con preguntas de **combinatoria** (permutaciones, combinaciones, con repetición, circulares, «al menos uno») y de cultura general. Acertar da un **dado dorado** (eliges el número); fallar cuesta una de tus 3 vidas. Al terminar ganas **monedas** 🪙 y **estrellas** ⭐ para comprar skins. El código `libre` lo desactiva.
+- **Multijugador online** 🌐: crea una sala, comparte el código de 6 caracteres (o el enlace) y juega con amigos desde otros dispositivos. Sin cuentas ni servidor propio.
 - **Instalable (PWA)** 📲: funciona sin conexión y se instala en el móvil desde el navegador (Chrome → «Instalar aplicación»).
 - **Modo ligero** ⚡: se activa solo en equipos modestos (o con el botón del panel): menos efectos, 30 fps y resolución reducida.
 - **Skins** ✎: personaliza tu ficha con 12 colores (o uno libre) y 12 personajes: peón, gema, tejedor, noche, calavera, robot, fantasma, ninja, astronauta, gato y y dos fichas distintas: un **vaso de Nestea** (sabor durazno) y la **bolsa de tostones** Tom. También puedes usar **un emoji** como cabeza. Dos jugadores no pueden compartir color.
@@ -48,6 +49,14 @@ Templo de jade · Volcán · Glaciar · Selva · Abismo (cada uno con su propia 
 | `M` / `N` | Silenciar efectos / música |
 
 ## Cómo funciona por dentro
+
+### Multijugador online
+- Las salas usan un relé **MQTT público** (EMQX, HiveMQ o Mosquitto) por WebSocket seguro, así que funciona detrás de cualquier router sin abrir puertos. El código de sala decide cuál relé se usa y el tema del relé no lleva el código en claro.
+- **Lockstep determinista:** todos ejecutan la misma partida con la misma semilla y solo viajan las *decisiones* (lanzar, elegir dado, reserva, dado dorado, respuesta). El anfitrión las ordena en un registro numerado y cada cliente lo aplica en ese orden. Es el mismo mecanismo de las repeticiones.
+- `net.js` añade fiabilidad sobre MQTT (que puede perder mensajes): reintentos con orden estricto por jugador, detección de huecos con reenvío, latidos, reconexión automática, y baja por inactividad. Un resumen de la partida se compara en cada turno para detectar desincronizaciones (botón «Resincronizar»).
+- Si alguien sale o se cae, **la CPU toma su lugar**; quien tarda más del tiempo elegido pierde esa jugada (sale una automática). Si se va el anfitrión, la sala se cierra. Se puede volver a una partida tras recargar la página.
+- La versión del juego debe ser la misma en todos los jugadores (`NET_VER` en `index.html`; hay que subirla cuando cambie algo que afecte a la simulación).
+- Cualquiera con el código puede entrar a la sala: compártelo solo con quien quieras que juegue.
 
 - Todo el dibujo es **canvas 2D**: serpientes que ondulan (curvas muestreadas con estampado de escamas), escaleras con brillo, fichas, partículas y ondas de choque.
 - El generador de tableros rechaza cruces y líneas pegadas, y cada perfil tiene sus propios rangos de cantidad y largo. Se probó que cada perfil genera un tablero válido en ~2 ms.
